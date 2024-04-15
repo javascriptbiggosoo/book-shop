@@ -5,6 +5,7 @@ const bookRouter = require("./routes/books");
 const orderRouter = require("./routes/orders");
 const cartRouter = require("./routes/carts");
 const likeRouter = require("./routes/likes");
+const categoryRouter = require("./routes/category");
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.listen(process.env.PORT);
 
 app.use("/users", userRouter);
 app.use("/books", bookRouter);
+app.use("/category", categoryRouter);
 app.use("/orders", orderRouter);
 app.use("/carts", cartRouter);
 app.use("/likes", likeRouter);

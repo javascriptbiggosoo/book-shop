@@ -2,11 +2,12 @@ const crypto = require("crypto");
 const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-const connection = require("../mariadb.js");
 const {
   insertUser,
-  findUserByEmail: findUserByEmailAndPassword,
-} = require("../queries/usersQueries.js");
+  findUserByEmail,
+  findUserForPasswordReset,
+  updateUserPassword,
+} = require("../queries/userQueries.js");
 
 dotenv.config();
 
@@ -33,7 +34,7 @@ const join = (req, res) => {
 const login = (req, res) => {
   const { email, password } = req.body;
 
-  findUserByEmailAndPassword(email, (err, result) => {
+  findUserByEmail(email, (err, result) => {
     if (err) {
       console.error(err);
       res.status(StatusCodes.BAD_REQUEST).end();
@@ -66,9 +67,7 @@ const login = (req, res) => {
 const passwordResetRequest = (req, res) => {
   const { email } = req.body;
 
-  const sql = `SELECT * FROM users WHERE email = ?`;
-  connection.query(sql, [email], (err, result) => {
-    //
+  findUserForPasswordReset(email, (err, result) => {
     if (err) {
       console.error(err);
       res.status(StatusCodes.BAD_REQUEST).end();
@@ -88,15 +87,19 @@ const passwordResetRequest = (req, res) => {
 const passwordReset = (req, res) => {
   const { email, password } = req.body;
 
-  const sql = `UPDATE users SET password = ? WHERE email = ?`;
-  connection.query(sql, [password, email], (err, result) => {
+  const salt = crypto.randomBytes(20).toString("base64");
+  const hashPassword = crypto
+    .pbkdf2Sync(password, salt, 100000, 20, "sha512")
+    .toString("base64");
+
+  updateUserPassword(email, hashPassword, salt, (err, result) => {
     if (err) {
       console.error(err);
       res.status(StatusCodes.BAD_REQUEST).end();
       return;
     }
 
-    // console.log(result);
+    console.log(result);
     if (result.affectedRows === 0) {
       res.status(StatusCodes.BAD_REQUEST).end();
       return;
