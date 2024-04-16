@@ -17,9 +17,10 @@ const getBooks = (req, res) => {
 };
 
 const getBookDetail = (req, res) => {
-  const { id } = req.params;
+  const { bookId } = req.params;
+  const { userId } = req.body;
 
-  selectBookById(id, (err, result) => {
+  selectBookById(bookId, userId, (err, result) => {
     if (err) {
       console.error(err);
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();

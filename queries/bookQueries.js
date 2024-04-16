@@ -7,7 +7,10 @@ const selectBooks = (query, callback) => {
   currentPage = parseInt(currentPage);
   const offset = (currentPage - 1) * limit;
 
-  let sql = `SELECT * FROM books`;
+  let sql = `
+  SELECT *,
+  (SELECT count(*) FROM likes WHERE books.id=liked_book_id) AS likes
+  FROM books`;
 
   if (category_id) {
     sql += ` WHERE category_id = ${category_id}`;
@@ -26,8 +29,15 @@ const selectBooks = (query, callback) => {
   connection.query(sql, callback);
 };
 
-const selectBookById = (id, callback) => {
-  const sql = `SELECT * FROM books LEFT JOIN category ON books.category_id = category.id WHERE books.id = ${id};`;
+const selectBookById = (bookId, userId, callback) => {
+  const sql = `
+  SELECT *, 
+    (SELECT count(*) FROM likes WHERE books.id=liked_book_id) AS likes,
+    (SELECT EXISTS(SELECT * FROM likes WHERE user_id = ${userId} AND liked_book_id = ${bookId})) AS liked
+  FROM books
+  LEFT JOIN category 
+  ON books.category_id = category.category_id
+  WHERE books.id = ${bookId}`;
   connection.query(sql, callback);
 };
 
