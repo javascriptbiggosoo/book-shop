@@ -1,11 +1,10 @@
 const { StatusCodes } = require("http-status-codes");
-
 const { selectBooks, selectBookById } = require("../queries/bookQueries");
 
 const getBooks = (req, res) => {
-  const { category_id, lastest, limit, currentPage } = req.query;
+  const { category_id, lastest, limit, current_page } = req.query;
 
-  selectBooks({ category_id, lastest, limit, currentPage }, (err, result) => {
+  selectBooks({ category_id, lastest, limit, current_page }, (err, result) => {
     if (err) {
       console.error(err);
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();

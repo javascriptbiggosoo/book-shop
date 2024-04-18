@@ -3,10 +3,9 @@ const { StatusCodes } = require("http-status-codes");
 const { insertLike, deleteLike } = require("../queries/likeQueries");
 
 const addLike = (req, res) => {
-  const { user_id } = req.body;
-  const { bookId } = req.params;
+  const { bookId, userId, quantity } = req.body;
 
-  insertLike(user_id, bookId, (err, result) => {
+  insertLike(userId, bookId, quantity, (err, result) => {
     if (err) {
       console.error(err);
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
@@ -18,10 +17,10 @@ const addLike = (req, res) => {
 };
 
 const cancleLike = (req, res) => {
-  const { user_id } = req.body;
+  const { userId } = req.body;
   const { bookId } = req.params;
 
-  deleteLike(user_id, bookId, (err, result) => {
+  deleteLike(userId, bookId, (err, result) => {
     if (err) {
       console.error(err);
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
