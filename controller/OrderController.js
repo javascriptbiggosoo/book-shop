@@ -1,63 +1,62 @@
 const { StatusCodes } = require("http-status-codes");
 const { insertDelivery } = require("../queries/deliveryQueries");
 const { insertOrderedBook } = require("../queries/orderedBookQueries");
-const { insertOrder } = require("../queries/orderQueries");
+const {
+  insertOrder,
+  selectOrders,
+  selectOrderDetail,
+} = require("../queries/orderQueries");
+const {
+  deleteCartItem,
+  selectBookIdAndQuantity,
+} = require("../queries/cartItemQueries");
 
-const order = (req, res) => {
+const order = async (req, res) => {
   const { userId, items, delivery, totalQuantity, totalPrice, fisrtBookTitle } =
     req.body;
 
-  let deliveryId = 2;
-  let orderId = 2;
-
   // 1. delivery 테이블에 데이터 추가
-  insertDelivery(delivery, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.BAD_REQUEST).end();
-      return;
-    }
+  const deliveryResult = await insertDelivery(delivery);
+  const deliveryId = deliveryResult.insertId;
+  // console.log(deliveryId);
 
-    const deliveryId = result.insertId;
-  });
+  // 1.5. 주문할 상품의 book_id와 quantity 조회
+  const [orderItems] = await selectBookIdAndQuantity(items);
+  // console.log(orderItems);
 
   // 2. orders 테이블에 데이터 추가
-  insertOrder(
-    { userId, deliveryId, totalQuantity, totalPrice, fisrtBookTitle },
-    (err, result) => {
-      if (err) {
-        console.error(err);
-        res.status(StatusCodes.BAD_REQUEST).end();
-        return;
-      }
-
-      const orderId = result.insertId;
-    }
-  );
+  const orderResult = await insertOrder({
+    userId,
+    deliveryId,
+    totalQuantity,
+    totalPrice,
+    fisrtBookTitle,
+  });
+  const orderId = orderResult.insertId;
+  // console.log(orderId);
 
   // 3. ordered_book 테이블에 데이터 추가
-  const orderedBookValues = items.map(
-    (item) => `(${deliveryId}, ${item.bookId}, ${item.quantity})`
+  const orderedBookValues = orderItems.map(
+    (item) => `(${orderId}, ${item.book_id}, ${item.quantity})`
   );
-  const valuesString = orderedBookValues.join(", ");
+  console.log(orderedBookValues);
+  await insertOrderedBook(orderedBookValues);
+  res.status(StatusCodes.CREATED).json({ message: "주문이 완료되었습니다." });
 
-  insertOrderedBook(valuesString, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.BAD_REQUEST).end();
-      return;
-    }
-
-    res.status(StatusCodes.CREATED).json(result);
-  });
+  // 4. cartItems 테이블에서 주문한 상품 삭제
+  await deleteCartItem(items);
 };
 
-const getOrders = (req, res) => {
-  res.json({ message: "" });
+const getOrders = async (req, res) => {
+  const [rows, fields] = await selectOrders();
+  res.status(StatusCodes.OK).json(rows);
 };
 
-const getOrderDetail = (req, res) => {
-  res.json({ message: "" });
+const getOrderDetail = async (req, res) => {
+  const { orderId } = req.params;
+  const [rows, fields] = await selectOrderDetail(orderId);
+
+  res.status(StatusCodes.OK).json(rows);
 };
 
 module.exports = {

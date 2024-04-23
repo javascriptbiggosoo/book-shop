@@ -16,7 +16,7 @@ const selectCartItems = (userId, selectedCartItemId, callback) => {
     FROM cartItems LEFT JOIN books
     ON cartItems.book_id = books.id
     WHERE user_id = ${userId}`;
-    connection.query(sql, callback);
+    connection.execute(sql, callback);
     return;
   }
 
@@ -26,18 +26,37 @@ const selectCartItems = (userId, selectedCartItemId, callback) => {
   ON cartItems.book_id = books.id
   WHERE user_id = ${userId} AND cartItems.id IN (${selectedCartItemId})
   `;
-  connection.query(sql, callback);
+  connection.execute(sql, callback);
 };
 
-const deleteCartItem = (cartItemId, callback) => {
+const selectBookIdAndQuantity = async (cartItemIds) => {
+  const conn = await connection;
+  // console.log(cartItemIds); // [1, 2, 3]
+  const valuesString = cartItemIds.join(", ");
+
+  const sql = `
+  SELECT book_id, quantity
+  FROM cartItems
+  WHERE id IN (${valuesString})
+  `;
+  return await conn.execute(sql);
+};
+
+const deleteCartItem = async (cartItemIds) => {
+  const valuesString = cartItemIds.join(", ");
+  const conn = await connection;
+
   const sql = `
   DELETE FROM cartItems
-  WHERE id = ${cartItemId}`;
-  connection.query(sql, callback);
+  WHERE id IN (${valuesString})
+  `;
+
+  return await conn.execute(sql);
 };
 
 module.exports = {
   selectCartItems,
+  selectBookIdAndQuantity,
   insertCartItem,
   deleteCartItem,
 };

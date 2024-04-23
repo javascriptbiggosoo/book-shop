@@ -14,6 +14,6 @@ router.post("/", order);
 // 주문 목록 조회
 router.get("/", getOrders);
 // 개별 주문 상세 조회
-router.get("/:id", getOrderDetail);
+router.get("/:orderId", getOrderDetail);
 
 module.exports = router;

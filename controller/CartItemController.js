@@ -37,18 +37,11 @@ const getCartItems = (req, res) => {
   });
 };
 
-const removeCartItem = (req, res) => {
+const removeCartItem = async (req, res) => {
   const { cartItemId } = req.params;
 
-  deleteCartItem(cartItemId, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.BAD_REQUEST).end();
-      return;
-    }
-
-    res.status(StatusCodes.OK).json(result);
-  });
+  await deleteCartItem(cartItemId);
+  res.status(StatusCodes.OK).json(result);
 };
 
 module.exports = {

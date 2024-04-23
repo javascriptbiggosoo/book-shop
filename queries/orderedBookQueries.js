@@ -1,9 +1,12 @@
 const connection = require("../mariadb");
 
-const insertOrderedBook = (valuesString, callback) => {
+const insertOrderedBook = async (orderedBookValues) => {
+  const valuesString = orderedBookValues.join(", ");
+  const conn = await connection;
+
   const sql = `INSERT INTO orderedBook (order_id, book_id, quantity) VALUES ${valuesString}`;
 
-  connection.query(sql, callback);
+  return await conn.execute(sql);
 };
 
 module.exports = {

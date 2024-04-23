@@ -1,7 +1,7 @@
 const connection = require("../mariadb.js");
 
-const selectBooks = (query, callback) => {
-  let { category_id, lastest, limit, currentPage } = query;
+const selectBooks = (requestParams, callback) => {
+  let { category_id, lastest, limit, currentPage } = requestParams;
 
   limit = parseInt(limit);
   currentPage = parseInt(currentPage);
