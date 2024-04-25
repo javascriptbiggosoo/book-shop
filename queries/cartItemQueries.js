@@ -1,13 +1,16 @@
 const connection = require("../mariadb.js");
 
-const insertCartItem = (userId, bookId, quantity, callback) => {
+const insertCartItem = async (userId, bookId, quantity) => {
+  const conn = await connection;
+
   const sql = `
   INSERT INTO cartItems (user_id, book_id, quantity)
   VALUES (${userId}, ${bookId}, ${quantity})`;
-  connection.query(sql, callback);
+  return await conn.execute(sql);
 };
 
-const selectCartItems = (userId, selectedCartItemId, callback) => {
+const selectCartItems = async (userId, selectedCartItemId) => {
+  const conn = await connection;
   console.log(selectedCartItemId);
 
   if (!selectedCartItemId) {
@@ -16,8 +19,8 @@ const selectCartItems = (userId, selectedCartItemId, callback) => {
     FROM cartItems LEFT JOIN books
     ON cartItems.book_id = books.id
     WHERE user_id = ${userId}`;
-    connection.execute(sql, callback);
-    return;
+
+    return await conn.execute(sql);
   }
 
   const sql = `
@@ -26,7 +29,8 @@ const selectCartItems = (userId, selectedCartItemId, callback) => {
   ON cartItems.book_id = books.id
   WHERE user_id = ${userId} AND cartItems.id IN (${selectedCartItemId})
   `;
-  connection.execute(sql, callback);
+
+  return await conn.execute(sql);
 };
 
 const selectBookIdAndQuantity = async (cartItemIds) => {
@@ -43,6 +47,8 @@ const selectBookIdAndQuantity = async (cartItemIds) => {
 };
 
 const deleteCartItem = async (cartItemIds) => {
+  if (typeof cartItemIds === "string") cartItemIds = [cartItemIds];
+
   const valuesString = cartItemIds.join(", ");
   const conn = await connection;
 

@@ -1,13 +1,17 @@
 const connection = require("../mariadb.js");
 
-const insertLike = (user_id, liked_book_id, callback) => {
-  const sql = `INSERT INTO likes (user_id, liked_book_id) VALUES (${user_id}, ${liked_book_id})`;
-  connection.query(sql, callback);
+const insertLike = async (userId, likedBookId) => {
+  const conn = await connection;
+
+  const sql = `INSERT INTO likes (user_id, liked_book_id) VALUES (${userId}, ${likedBookId})`;
+  return await conn.query(sql);
 };
 
-const deleteLike = (user_id, liked_book_id, callback) => {
-  const sql = `DELETE FROM likes WHERE user_id = ${user_id} AND liked_book_id = ${liked_book_id}`;
-  connection.query(sql, callback);
+const deleteLike = async (userId, likedBookId) => {
+  const conn = await connection;
+
+  const sql = `DELETE FROM likes WHERE user_id = ${userId} AND liked_book_id = ${likedBookId}`;
+  return await conn.query(sql);
 };
 
 module.exports = {

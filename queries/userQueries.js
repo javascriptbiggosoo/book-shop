@@ -1,23 +1,28 @@
 const connection = require("../mariadb.js");
 
-const insertUser = (email, password, salt, callback) => {
+const insertUser = async (email, password, salt) => {
+  const conn = await connection;
   const sql = `INSERT INTO users (email, password, salt) VALUES ("${email}", "${password}", "${salt}")`;
-  connection.query(sql, callback);
+  return await conn.query(sql);
 };
 
-const findUserByEmail = (email, callback) => {
+const findUserByEmail = async (email) => {
+  const conn = await connection;
+
   const sql = `SELECT * FROM users WHERE email = "${email}" `;
-  connection.query(sql, callback);
+  return await conn.query(sql);
 };
 
-const findUserForPasswordReset = (email, callback) => {
+const findUserForPasswordReset = async (email) => {
+  const conn = await connection;
   const sql = `SELECT * FROM users WHERE email = "${email}"`;
-  connection.query(sql, callback);
+  return await conn.query(sql);
 };
 
-const updateUserPassword = (email, password, salt, callback) => {
+const updateUserPassword = async (email, password, salt) => {
+  const conn = await connection;
   const sql = `UPDATE users SET password = "${password}", salt = "${salt}" WHERE email = "${email}"`;
-  connection.query(sql, callback);
+  return await conn.query(sql);
 };
 
 module.exports = {

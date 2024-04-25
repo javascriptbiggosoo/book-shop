@@ -4,44 +4,66 @@ const {
   insertCartItem,
   deleteCartItem,
 } = require("../queries/cartItemQueries");
+const decodeJwt = require("../utils/decodeJwt");
+const { TokenExpiredError, JsonWebTokenError } = require("jsonwebtoken");
 
-const addToCart = (req, res) => {
-  const { userId, bookId, quantity } = req.body;
+const addToCart = async (req, res) => {
+  const { bookId, quantity } = req.body;
 
-  insertCartItem(userId, bookId, quantity, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.BAD_REQUEST).end();
+  try {
+    const decoded = decodeJwt(req, res);
+
+    const [rows, fields] = await insertCartItem(decoded.id, bookId, quantity);
+    res.status(StatusCodes.CREATED).json(rows);
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: "JWT 토큰이 만료되었습니다." });
+      return;
+    } else if (error instanceof JsonWebTokenError) {
+      res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "JWT 토큰이 유효하지 않습니다." });
       return;
     }
-
-    res.status(StatusCodes.CREATED).json(result);
-  });
+  }
 };
 
-const getCartItems = (req, res) => {
-  const { userId } = req.params;
+const getCartItems = async (req, res) => {
   let { selected_cart_item_id } = req.query;
-  if (selected_cart_item_id) {
-    selected_cart_item_id = selected_cart_item_id.split(",");
-  }
+  try {
+    const decoded = decodeJwt(req, res);
 
-  selectCartItems(userId, selected_cart_item_id, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
-      return;
+    if (selected_cart_item_id) {
+      selected_cart_item_id = selected_cart_item_id.split(",");
     }
 
-    res.status(StatusCodes.OK).json(result);
-  });
+    const [rows, fields] = await selectCartItems(
+      decoded.id,
+      selected_cart_item_id
+    );
+    res.status(StatusCodes.OK).json(rows);
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: "JWT 토큰이 만료되었습니다." });
+      return;
+    } else if (error instanceof JsonWebTokenError) {
+      res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "JWT 토큰이 유효하지 않습니다." });
+      return;
+    }
+  }
 };
 
 const removeCartItem = async (req, res) => {
   const { cartItemId } = req.params;
 
-  await deleteCartItem(cartItemId);
-  res.status(StatusCodes.OK).json(result);
+  const [rows, fields] = await deleteCartItem(cartItemId);
+  res.status(StatusCodes.OK).json(rows);
 };
 
 module.exports = {

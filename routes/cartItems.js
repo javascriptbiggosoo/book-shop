@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(express.json());
 
 router.post("/", addToCart);
-router.get("/:userId", getCartItems);
+router.get("/", getCartItems);
 router.delete("/:cartItemId", removeCartItem);
 
 module.exports = router;

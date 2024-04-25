@@ -11,7 +11,7 @@ const {
 
 dotenv.config();
 
-const join = (req, res) => {
+const join = async (req, res) => {
   const { email, password } = req.body;
 
   // 암호화된 비밀번호와 salt 값을 DB에 저장
@@ -31,40 +31,43 @@ const join = (req, res) => {
   });
 };
 
-const login = (req, res) => {
+const login = async (req, res) => {
   const { email, password } = req.body;
 
-  findUserByEmail(email, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.BAD_REQUEST).end();
-      return;
-    }
+  // 이메일로 사용자 정보 조회
+  const [rows] = await findUserByEmail(email);
+  const loginUserInfo = rows[0];
 
-    const loginUserInfo = result[0];
+  // 로그인
+  const hashPassword = crypto
+    .pbkdf2Sync(password, loginUserInfo.salt, 100000, 20, "sha512")
+    .toString("base64");
 
-    const hashPassword = crypto
-      .pbkdf2Sync(password, loginUserInfo.salt, 100000, 20, "sha512")
-      .toString("base64");
-
-    if (loginUserInfo.password !== hashPassword) {
-      res.status(StatusCodes.UNAUTHORIZED).end();
-      return;
-    }
-
-    const token = jwt.sign({ email }, process.env.PRIVATE_KEY, {
-      expiresIn: "3m",
-    });
-
-    res.cookie("token", token, { httpOnly: true });
-    console.log(token);
-
-    res.status(StatusCodes.OK).json({ message: "로그인 성공" });
+  if (loginUserInfo.password !== hashPassword) {
+    res.status(StatusCodes.UNAUTHORIZED).end();
     return;
-  });
+  }
+
+  // JWT 토큰 생성
+  const token = jwt.sign(
+    {
+      email: loginUserInfo.email,
+      id: loginUserInfo.id,
+    },
+    process.env.PRIVATE_KEY,
+    {
+      expiresIn: "40m",
+    }
+  );
+
+  // 쿠키에 토큰 저장
+  res.cookie("token", token, { httpOnly: true });
+  console.log(token);
+
+  res.status(StatusCodes.OK).json({ message: "로그인 성공" });
 };
 
-const passwordResetRequest = (req, res) => {
+const passwordResetRequest = async (req, res) => {
   const { email } = req.body;
 
   findUserForPasswordReset(email, (err, result) => {
@@ -84,7 +87,7 @@ const passwordResetRequest = (req, res) => {
   });
 };
 
-const passwordReset = (req, res) => {
+const passwordReset = async (req, res) => {
   const { email, password } = req.body;
 
   const salt = crypto.randomBytes(20).toString("base64");

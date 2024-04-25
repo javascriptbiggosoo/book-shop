@@ -1,34 +1,24 @@
 // k조 김진영
 const { StatusCodes } = require("http-status-codes");
 const { insertLike, deleteLike } = require("../queries/likeQueries");
+const decodeJwt = require("../utils/decodeJwt");
 
-const addLike = (req, res) => {
-  const { bookId, userId, quantity } = req.body;
-
-  insertLike(userId, bookId, quantity, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
-      return;
-    }
-
-    res.status(StatusCodes.CREATED).json(result);
-  });
-};
-
-const cancleLike = (req, res) => {
-  const { userId } = req.body;
+const addLike = async (req, res) => {
   const { bookId } = req.params;
 
-  deleteLike(userId, bookId, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
-      return;
-    }
+  const decoded = decodeJwt(req);
 
-    res.status(StatusCodes.OK).json(result);
-  });
+  const [rows, fields] = await insertLike(decoded.id, bookId);
+  res.status(StatusCodes.CREATED).json(rows);
+};
+
+const cancleLike = async (req, res) => {
+  const { bookId } = req.params;
+
+  const decoded = decodeJwt(req);
+
+  const [rows, fields] = await deleteLike(decoded.id, bookId);
+  res.status(StatusCodes.OK).json(rows);
 };
 
 module.exports = {
