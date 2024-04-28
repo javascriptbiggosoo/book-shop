@@ -7,7 +7,7 @@ const {
   findUserByEmail,
   findUserForPasswordReset,
   updateUserPassword,
-} = require("../queries/userQueries.js");
+} = require("../models/userQueries.js");
 
 dotenv.config();
 

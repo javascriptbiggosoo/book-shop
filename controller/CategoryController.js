@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { selectAllCategories } = require("../queries/categoryQueries");
+const { selectAllCategories } = require("../models/categoryQueries");
 
 const getAllCategories = (req, res) => {
   selectAllCategories((err, result) => {

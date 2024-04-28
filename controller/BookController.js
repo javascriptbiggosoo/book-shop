@@ -1,38 +1,93 @@
 const { StatusCodes } = require("http-status-codes");
-const { selectBooks, selectBookById } = require("../queries/bookQueries");
+const { TokenExpiredError, JsonWebTokenError } = require("jsonwebtoken");
+const {
+  selectBooks,
+  selectBookById,
+  selectBookWioutLogin,
+  selectTotalBooks,
+} = require("../models/bookQueries");
+const decodeJwt = require("../utils/auth");
 
-const getBooks = (req, res) => {
+const getBooks = async (req, res) => {
   const { category_id, lastest, limit, current_page } = req.query;
+  const getBooksResponse = {};
 
-  selectBooks({ category_id, lastest, limit, current_page }, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
-      return;
-    }
-
-    res.status(StatusCodes.OK).json(result);
+  const [selectBooksRows] = await selectBooks({
+    category_id,
+    lastest,
+    limit,
+    current_page,
   });
+  // 스네이크 케이스를 카멜 케이스로 변경
+  getBooksResponse.books = selectBooksRows.map(
+    ({
+      id,
+      title,
+      img,
+      category_id,
+      form,
+      isbn,
+      summary,
+      detail,
+      author,
+      pages,
+      contents,
+      price,
+      pub_date,
+      likes,
+    }) => {
+      return {
+        id,
+        title,
+        img,
+        categoryId: category_id,
+        form,
+        isbn,
+        summary,
+        detail,
+        author,
+        pages,
+        contents,
+        price,
+        pubDate: pub_date,
+        likes,
+      };
+    }
+  );
+
+  const [selectTotalBooksRows] = await selectTotalBooks(category_id);
+  getBooksResponse.pagination = {
+    totalCount: selectTotalBooksRows[0].total_count,
+    currentPage: parseInt(current_page),
+  };
+  res.status(StatusCodes.OK).json(getBooksResponse);
 };
 
-const getBookDetail = (req, res) => {
+const getBookDetail = async (req, res) => {
   const { bookId } = req.params;
-  const { userId } = req.body;
+  try {
+    const decoded = decodeJwt(req);
 
-  selectBookById(bookId, userId, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
+    const [rows, fields] = await selectBookById(bookId, decoded.id);
+    res.status(StatusCodes.OK).json(rows);
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: "JWT 토큰이 만료되었습니다." });
+      return;
+    } else if (error instanceof JsonWebTokenError) {
+      res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "JWT 토큰이 유효하지 않습니다." });
+      return;
+    } else if (error instanceof ReferenceError) {
+      // 로그인이 되어있지 않은 경우
+      const [rows, fields] = await selectBookWioutLogin(bookId);
+      res.status(StatusCodes.OK).json(rows);
       return;
     }
-
-    if (result.length === 0) {
-      res.status(StatusCodes.NOT_FOUND).end();
-      return;
-    }
-
-    res.status(StatusCodes.OK).json(result[0]);
-  });
+  }
 };
 
 module.exports = { getBooks, getBookDetail };
