@@ -20,15 +20,9 @@ const join = async (req, res) => {
     .pbkdf2Sync(password, salt, 100000, 20, "sha512")
     .toString("base64"); // 비밀번호, salt, 해시 반복 횟수, 해시 길이, 해시 알고리즘 종류
 
-  insertUser(email, hashPassword, salt, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.BAD_REQUEST).end();
-      return;
-    }
-
-    res.status(StatusCodes.CREATED).json({ message: "회원가입 성공" });
-  });
+  const [rows, fields] = await insertUser(email, hashPassword, salt);
+  console.log(rows);
+  res.status(StatusCodes.CREATED).json({ message: "회원가입 성공" });
 };
 
 const login = async (req, res) => {
@@ -56,7 +50,7 @@ const login = async (req, res) => {
     },
     process.env.PRIVATE_KEY,
     {
-      expiresIn: "40m",
+      expiresIn: "4hr",
     }
   );
 
@@ -70,21 +64,14 @@ const login = async (req, res) => {
 const passwordResetRequest = async (req, res) => {
   const { email } = req.body;
 
-  findUserForPasswordReset(email, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.BAD_REQUEST).end();
-      return;
-    }
+  const [rows, fields] = await findUserForPasswordReset(email);
+  console.log(rows);
+  if (rows.length === 0) {
+    res.status(StatusCodes.NOT_FOUND).end();
+    return;
+  }
 
-    // 가입되지 않은 이메일
-    if (result.length === 0) {
-      res.status(StatusCodes.NOT_FOUND).end();
-      return;
-    }
-
-    res.status(StatusCodes.OK).end();
-  });
+  res.status(StatusCodes.OK).end();
 };
 
 const passwordReset = async (req, res) => {
@@ -95,21 +82,12 @@ const passwordReset = async (req, res) => {
     .pbkdf2Sync(password, salt, 100000, 20, "sha512")
     .toString("base64");
 
-  updateUserPassword(email, hashPassword, salt, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.BAD_REQUEST).end();
-      return;
-    }
-
-    console.log(result);
-    if (result.affectedRows === 0) {
-      res.status(StatusCodes.BAD_REQUEST).end();
-      return;
-    }
-
-    res.status(StatusCodes.OK).json(result);
-  });
+  const [rows, fields] = await updateUserPassword(email, hashPassword, salt);
+  if (rows.length === 0) {
+    res.status(StatusCodes.NOT_FOUND).end();
+    return;
+  }
+  res.status(StatusCodes.OK).json(result);
 };
 
 module.exports = { join, login, passwordResetRequest, passwordReset };

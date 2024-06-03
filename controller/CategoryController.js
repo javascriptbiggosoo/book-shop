@@ -1,16 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
 const { selectAllCategories } = require("../models/categoryQueries");
 
-const getAllCategories = (req, res) => {
-  selectAllCategories((err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
-      return;
-    }
-
-    res.status(StatusCodes.OK).json(result);
-  });
+const getAllCategories = async (req, res) => {
+  const [rows, fields] = await selectAllCategories();
+  res.status(StatusCodes.OK).json(rows);
 };
 
 module.exports = { getAllCategories };

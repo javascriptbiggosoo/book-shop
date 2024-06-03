@@ -3,7 +3,8 @@ const connection = require("../mariadb.js");
 const insertUser = async (email, password, salt) => {
   const conn = await connection;
   const sql = `INSERT INTO users (email, password, salt) VALUES ("${email}", "${password}", "${salt}")`;
-  return await conn.query(sql);
+
+  return await conn.execute(sql);
 };
 
 const findUserByEmail = async (email) => {

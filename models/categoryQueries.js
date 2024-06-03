@@ -1,8 +1,10 @@
 const connection = require("../mariadb.js");
 
-const selectAllCategories = (callback) => {
+const selectAllCategories = async () => {
+  const conn = await connection;
   const sql = `SELECT * FROM category`;
-  connection.query(sql, callback);
+
+  return await conn.execute(sql);
 };
 
 module.exports = {

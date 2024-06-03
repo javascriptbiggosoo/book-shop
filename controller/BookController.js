@@ -67,9 +67,49 @@ const getBookDetail = async (req, res) => {
   const { bookId } = req.params;
   try {
     const decoded = decodeJwt(req);
+    const getBookDetailResponse = {};
 
     const [rows, fields] = await selectBookById(bookId, decoded.id);
-    res.status(StatusCodes.OK).json(rows);
+    getBookDetailResponse.book = rows.map(
+      ({
+        id,
+        title,
+        img,
+        category_id,
+        form,
+        isbn,
+        summary,
+        detail,
+        author,
+        pages,
+        contents,
+        price,
+        pub_date,
+        category_name,
+        likes,
+        liked,
+      }) => {
+        return {
+          id,
+          title,
+          img,
+          categoryId: category_id,
+          form,
+          isbn,
+          summary,
+          detail,
+          author,
+          pages,
+          contents,
+          price,
+          pubDate: pub_date,
+          categoryName: category_name,
+          likes,
+          liked,
+        };
+      }
+    );
+    res.status(StatusCodes.OK).json(getBookDetailResponse.book);
   } catch (error) {
     if (error instanceof TokenExpiredError) {
       res
