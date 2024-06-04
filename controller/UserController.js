@@ -58,7 +58,7 @@ const login = async (req, res) => {
   res.cookie("token", token, { httpOnly: true });
   console.log(token);
 
-  res.status(StatusCodes.OK).json({ message: "로그인 성공" });
+  res.status(StatusCodes.OK).json({ token });
 };
 
 const passwordResetRequest = async (req, res) => {
@@ -87,7 +87,7 @@ const passwordReset = async (req, res) => {
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
-  res.status(StatusCodes.OK).json(result);
+  res.status(StatusCodes.OK).json(rows);
 };
 
 module.exports = { join, login, passwordResetRequest, passwordReset };
