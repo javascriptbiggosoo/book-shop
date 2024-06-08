@@ -123,9 +123,50 @@ const getBookDetail = async (req, res) => {
       return;
     } else if (error instanceof ReferenceError) {
       // 로그인이 되어있지 않은 경우
+      console.log("앙");
+      const getBooksResponse = {};
+
       const [rows, fields] = await selectBookWioutLogin(bookId);
-      res.status(StatusCodes.OK).json(rows);
-      return;
+
+      getBooksResponse.book = rows.map(
+        ({
+          id,
+          title,
+          img,
+          category_id,
+          form,
+          isbn,
+          summary,
+          detail,
+          author,
+          pages,
+          contents,
+          price,
+          pub_date,
+          category_name,
+          likes,
+        }) => {
+          return {
+            id,
+            title,
+            img,
+            categoryId: category_id,
+            form,
+            isbn,
+            summary,
+            detail,
+            author,
+            pages,
+            contents,
+            price,
+            categoryName: category_name,
+            pubDate: pub_date,
+            likes,
+          };
+        }
+      );
+
+      res.status(StatusCodes.OK).json(getBooksResponse.book);
     }
   }
 };
