@@ -14,9 +14,15 @@ const decodeJwt = require("../utils/auth");
 const { TokenExpiredError, JsonWebTokenError } = require("jsonwebtoken");
 
 const order = async (req, res) => {
-  const { items, delivery, totalQuantity, totalPrice, fisrtBookTitle } =
-    req.body;
-
+  const {
+    items,
+    delivery,
+    total_quantity: totalQuantity,
+    total_price: totalPrice,
+    fisrt_book_title: fisrtBookTitle,
+    user_id: userId,
+  } = req.body;
+  // console.log(req.body);
   try {
     const decoded = decodeJwt(req);
 
@@ -26,19 +32,23 @@ const order = async (req, res) => {
     // console.log(deliveryId);
 
     // 1.5. 주문할 상품의 book_id와 quantity 조회
-    const [orderItems] = await selectBookIdAndQuantity(items);
-    // console.log(orderItems);
+    const [rowsx, fieldsx] = await selectBookIdAndQuantity(items);
+    const orderItems = rowsx.map((item) => ({
+      book_id: item.book_id,
+      quantity: item.quantity,
+    }));
+    console.log("orderItems: " + orderItems);
 
     // 2. orders 테이블에 데이터 추가
-    const orderResult = await insertOrder({
-      userId: decoded.id,
-      deliveryId,
-      totalQuantity,
-      totalPrice,
-      fisrtBookTitle,
+    const [row, fields] = await insertOrder({
+      userId, // od
+      deliveryId, // ok
+      totalQuantity, // ok
+      totalPrice, // ok
+      fisrtBookTitle, // ok
     });
-    const orderId = orderResult.insertId;
-    // console.log(orderId);
+    console.log("row: ", row);
+    const { insertId: orderId } = row;
 
     // 3. ordered_book 테이블에 데이터 추가
     const orderedBookValues = orderItems.map(

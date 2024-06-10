@@ -35,15 +35,13 @@ const selectCartItems = async (userId, selectedCartItemId) => {
 
 const selectBookIdAndQuantity = async (cartItemIds) => {
   const conn = await connection;
-  // console.log(cartItemIds); // [1, 2, 3]
   const valuesString = cartItemIds.join(", ");
-
   const sql = `
   SELECT book_id, quantity
   FROM cartItems
   WHERE id IN (${valuesString})
   `;
-  return await conn.execute(sql);
+  return await conn.query(sql);
 };
 
 const deleteCartItem = async (cartItemIds) => {

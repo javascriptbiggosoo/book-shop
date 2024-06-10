@@ -1,5 +1,4 @@
 const connection = require("../mariadb.js");
-const { StatusCodes } = require("http-status-codes");
 
 const insertOrder = async ({
   userId,
@@ -8,11 +7,10 @@ const insertOrder = async ({
   totalPrice,
   fisrtBookTitle,
 }) => {
+  // console.log(userId, deliveryId, totalQuantity, totalPrice, fisrtBookTitle);
   const conn = await connection;
-
-  const sql = `INSERT INTO orders (user_id, delivery_id, total_quantity, total_price, book_title) VALUES (${userId}, ${deliveryId}, ${totalQuantity}, ${totalPrice}, '${fisrtBookTitle}')`;
-
-  const [result] = await conn.execute(sql);
+  const sql = `INSERT INTO orders (user_id, delivery_id, total_quantity, total_price, book_title) VALUES (${userId}, ${deliveryId}, ${totalQuantity}, "${totalPrice}", "${fisrtBookTitle}")`;
+  const result = await conn.query(sql);
   return result;
 };
 
